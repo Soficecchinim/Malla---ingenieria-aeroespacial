@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Malla Interactiva Ingeniería Aeroespacial - UNLP</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px;
+    }
+    .year-column {
+      background: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .year-title {
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .subject {
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 8px;
+      background: #e0eafc;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s;
+    }
+    .subject.locked {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .subject:hover {
+      background: #c9daf8;
+    }
+    .subject.completed {
+      background: #b0eacd;
+      text-decoration: line-through;
+    }
+    .tooltip {
+      display: none;
+      position: absolute;
+      background: #333;
+      color: #fff;
+      padding: 5px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      top: 100%;
+      left: 0;
+      z-index: 10;
+    }
+    .subject.locked:hover .tooltip {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Malla Interactiva - Ingeniería Aeroespacial UNLP</h1>
+  <div class="container" id="malla"></div>
+
+  <script>
+    const materias = [
+      // Año 1
+      { codigo: "D1001", nombre: "Matemática para ingeniería", año: 1 },
+      { codigo: "F1301", nombre: "Matemática A", año: 1, requisitos: ["D1001"] },
+      { codigo: "M1602", nombre: "Gráfica para Ingeniería", año: 1 },
+      { codigo: "A11001", nombre: "Introducción a Ingeniería Aeroespacial", año: 1 },
+      { codigo: "F1302", nombre: "Matemática B", año: 1, requisitos: ["F1301"] },
+      { codigo: "F1303", nombre: "Física 1", año: 1, requisitos: ["F1301"] },
+      { codigo: "U1901", nombre: "Química para Ingeniería", año: 1 },
+      // Año 2
+      { codigo: "F1304", nombre: "Matemática C", año: 2, requisitos: ["F1302"] },
+      { codigo: "F1305", nombre: "Física 2", año: 2, requisitos: ["F1302", "F1303"] },
+      { codigo: "F1315", nombre: "Probabilidades y Estadísticas", año: 2, requisitos: ["F1302"] },
+      { codigo: "F1306", nombre: "Matemática D", año: 2, requisitos: ["F1304"] },
+      { codigo: "F1316", nombre: "Introducción a Programación y Análisis numérico", año: 2, requisitos: ["F1304"] },
+      { codigo: "C1151", nombre: "Estructuras 1", año: 2, requisitos: ["F1303"] },
+      { codigo: "M1603", nombre: "Materiales", año: 2, requisitos: ["U1901"] },
+      // Año 3
+      { codigo: "A1102", nombre: "Materiales Aeroespaciales", año: 3, requisitos: ["M1603"] },
+      { codigo: "A1006", nombre: "Ensayos no destructivos", año: 3, requisitos: ["M1603", "F1305"] },
+      { codigo: "M1604", nombre: "Termodinámica", año: 3, requisitos: ["F1302", "F1303", "U1901"] },
+      { codigo: "C1153", nombre: "Estructuras 2", año: 3, requisitos: ["C1151", "F1302", "M1603"] },
+      { codigo: "A1009", nombre: "Mecánica Racional", año: 3, requisitos: ["F1303", "F1304"] },
+      { codigo: "A1010", nombre: "Electrotecnia y Sistemas de aeronaves", año: 3, requisitos: ["F1304", "F1305"] },
+      { codigo: "A1011", nombre: "Mecánica de fluidos 1", año: 3, requisitos: ["F1306", "F1316", "M1604"] },
+      { codigo: "A1016", nombre: "Mecanismos y Sistemas de aeronaves", año: 3, requisitos: ["A1009", "C1153"] },
+      { codigo: "A1008", nombre: "Estructuras 3", año: 3, requisitos: ["C1153", "F1316"] },
+      { codigo: "ACAE1", nombre: "AFC 1", año: 3, requisitos: ["10"] },
+      // Año 4
+      { codigo: "A1013", nombre: "Estructuras 4", año: 4, requisitos: ["A1102", "A1008"] },
+      { codigo: "A1015", nombre: "Mecánica de fluidos 2", año: 4, requisitos: ["A1011", "F1315"] },
+      { codigo: "A1012", nombre: "Sistemas dinámicos", año: 4, requisitos: ["F1305", "F1315", "A1009", "A1008"] },
+      { codigo: "P1752", nombre: "Economía para Ingeniería y Organización Industrial", año: 4, requisitos: ["15"] },
+      { codigo: "S0001", nombre: "ELECTIVA HUMANÍSTICA", año: 4, requisitos: ["15"] },
+      { codigo: "ACAE2", nombre: "AFC 2", año: 4, requisitos: ["ACAE1"] },
+      { codigo: "A1017", nombre: "Motores a Reacción", año: 4, requisitos: ["A1015"] },
+      { codigo: "A1018", nombre: "Aerodinámica y Mecánica de vuelo 1", año: 4, requisitos: ["A1009", "A1015"] },
+      { codigo: "A1019", nombre: "Procesos de fabricación", año: 4, requisitos: ["A1102", "M1603"] },
+      { codigo: "A1014", nombre: "Estructuras 5", año: 4, requisitos: ["A1013", "A1102"] },
+      { codigo: "P1759", nombre: "Ingeniería Legal y Ejercicio Profesional", año: 4, requisitos: ["20"] },
+      { codigo: "ACAE3", nombre: "AFC 3", año: 4, requisitos: ["ACAE2"] },
+      // Año 5
+      { codigo: "A1020", nombre: "Motores Alternativos", año: 5, requisitos: ["A1012", "A1016", "M1604", "M1603"] },
+      { codigo: "A1021", nombre: "Aerodinámica y Mecánica de vuelo 2", año: 5, requisitos: ["A1012", "A1018"] },
+      { codigo: "A1022", nombre: "Mediciones e Instrumentación de aeronaves", año: 5, requisitos: ["A1010", "A1016", "A1017", "M1603"] },
+      { codigo: "A1028", nombre: "Aeropuertos y Operaciones de vuelo", año: 5, requisitos: ["A1017", "A1018"] },
+      { codigo: "ACAE4", nombre: "AFC 4", año: 5, requisitos: ["ACAE3", "M0001"] },
+      { codigo: "A1023", nombre: "Control y Guiado", año: 5, requisitos: ["A1021", "A1022"] },
+      { codigo: "A1024", nombre: "Talleres y Mantenimiento Aeronáutico", año: 5, requisitos: ["30"] },
+      { codigo: "A1026", nombre: "Sistemas y Equipos de aeronaves", año: 5, requisitos: ["A1022"] },
+      { codigo: "OPTATIVA", nombre: "OPTATIVA", año: 5, requisitos: ["30"] },
+      { codigo: "ACAE5", nombre: "AFC 5", año: 5, requisitos: ["ACAE4", "M0001"] },
+      { codigo: "A1034", nombre: "Práctica profesional supervisada", año: 5, requisitos: ["30"] },
+      { codigo: "M0001", nombre: "Inglés", año: 5 },
+    ];
+
+    const aprobadas = new Set(JSON.parse(localStorage.getItem("materias_aprobadas")) || []);
+
+    function checkRequisitos(materia) {
+      if (!materia.requisitos) return true;
+      if (materia.requisitos.length === 1 && !isNaN(materia.requisitos[0])) {
+        return aprobadas.size >= parseInt(materia.requisitos[0]);
+      }
+      return materia.requisitos.every(cod => aprobadas.has(cod));
+    }
+
+    function renderMalla() {
+      const container = document.getElementById("malla");
+      container.innerHTML = "";
+
+      for (let año = 1; año <= 5; año++) {
+        const col = document.createElement("div");
+        col.className = "year-column";
+        col.innerHTML = `<div class="year-title">${año}º año</div>`;
+
+        materias.filter(m => m.año === año).forEach(m => {
+          const item = document.createElement("div");
+          item.className = "subject";
+          if (aprobadas.has(m.codigo)) item.classList.add("completed");
+          if (!checkRequisitos(m)) item.classList.add("locked");
+
+          item.innerHTML = `${m.nombre} (${m.codigo})`;
+
+          if (item.classList.contains("locked")) {
+            const tooltip = document.createElement("div");
+            tooltip.className = "tooltip";
+            const faltan = (m.requisitos || []).filter(c => !aprobadas.has(c) && !c.match(/^\d+$/));
+            tooltip.textContent = "Faltan: " + faltan.join(", ");
+            item.appendChild(tooltip);
+          }
+
+          item.onclick = () => {
+            if (item.classList.contains("locked")) return;
+            if (aprobadas.has(m.codigo)) aprobadas.delete(m.codigo);
+            else aprobadas.add(m.codigo);
+            localStorage.setItem("materias_aprobadas", JSON.stringify([...aprobadas]));
+            renderMalla();
+          };
+
+          col.appendChild(item);
+        });
+
+        container.appendChild(col);
+      }
+    }
+
+    renderMalla();
+  </script>
+</body>
+</html>
